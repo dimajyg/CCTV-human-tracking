@@ -1,0 +1,29 @@
+[project]
+name = "cctv-human-tracking"
+version = "0.1.0"
+description = "CCTV Human Tracking using YOLO and DeepSORT"
+authors = [
+    {name = "Dmitrii Tikhanovskii",email = "dimont200246@gmail.com"}
+]
+readme = "README.md"
+requires-python = "^3.11"
+dependencies = [
+    "opencv-python",
+    "numpy>=1.24.4",
+    "boxmot",
+    "torch",
+    "torchvision",
+    "setuptools",
+    "ultralytics (>=8.3.119,<9.0.0)",
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+packages = [
+    { include = "detection" },
+    { include = "tracking" }
+]
