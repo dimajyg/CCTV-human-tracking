@@ -69,9 +69,9 @@ class DeepSORTTracker:
                            Returns an empty array if no objects are tracked.
         """
         if detections is None or len(detections) == 0:
-            # If no detections, just advance the tracker state
-            self.tracker.increment_ages()
-            return np.empty((0, 7)) # Return empty array with correct shape
+            # If no detections, return empty array with correct shape
+            # The tracker state will be updated in the next frame with detections
+            return np.empty((0, 7))
 
         # Ensure detections has at least 6 columns (x1,y1,x2,y2,conf,cls)
         if detections.shape[1] < 6:

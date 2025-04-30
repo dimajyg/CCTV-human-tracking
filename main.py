@@ -10,8 +10,8 @@ from tracking.deepsort import DeepSORTTracker
 # --- Configuration --- 
 DEFAULT_INPUT_VIDEO = 'input.mp4' # Default input video file
 DEFAULT_OUTPUT_VIDEO = 'output.avi' # Default output video file
-YOLO_MODEL = 'yolov8n.pt' # Path to YOLO weights
-REID_MODEL = 'osnet_x0_25_msmt17.pt' # Path to ReID weights
+YOLO_MODEL = 'weights/yolo/yolo11n.pt' # Path to YOLO weights
+REID_MODEL = 'weights/reid/osnet_x0_25_msmt17.pt' # Path to ReID weights
 SHOW_VIDEO = True # Display the processed video in a window
 SAVE_VIDEO = True # Save the processed video to a file
 
@@ -45,7 +45,7 @@ def draw_boxes(frame, tracked_objects):
 
 # --- Main Processing Function --- 
 
-def process_video(input_path, output_path, yolo_model_path, reid_model_path, show=True, save=True):
+def process_video(input_path, output_path, yolo_model_path, reid_model_path, show=True, save=True, stride=1, frame_callback=None):
     """Processes the video for human tracking."""
     print("Initializing detector and tracker...")
     try:
@@ -65,6 +65,7 @@ def process_video(input_path, output_path, yolo_model_path, reid_model_path, sho
     frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = int(cap.get(cv2.CAP_PROP_FPS))
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
     # Initialize video writer if saving
     writer = None
@@ -87,6 +88,10 @@ def process_video(input_path, output_path, yolo_model_path, reid_model_path, sho
             break
 
         frame_count += 1
+        
+        # Skip frames based on stride
+        if frame_count % stride != 0:
+            continue
         
         # 1. Detect humans
         detections = detector.detect(frame)
@@ -111,6 +116,10 @@ def process_video(input_path, output_path, yolo_model_path, reid_model_path, sho
         # 5. Save frame (optional)
         if save and writer:
             writer.write(frame_with_boxes)
+            
+        # 6. Call frame callback if provided
+        if frame_callback:
+            frame_callback(frame_with_boxes, frame_count, total_frames)
 
     end_time = time.time()
     processing_time = end_time - start_time
@@ -146,6 +155,8 @@ if __name__ == "__main__":
                         help='Do not display the processed video window.')
     parser.add_argument('--no_save', action='store_true', 
                         help='Do not save the processed video.')
+    parser.add_argument('--stride', type=int, default=1,
+                        help='Process every nth frame (default: 1)')
 
     args = parser.parse_args()
 
@@ -164,7 +175,8 @@ if __name__ == "__main__":
         yolo_model_path=args.yolo_model,
         reid_model_path=args.reid_model,
         show=not args.hide_video,
-        save=not args.no_save
+        save=not args.no_save,
+        stride=args.stride
     )
 
     print("--- CCTV Human Tracking Finished ---")
