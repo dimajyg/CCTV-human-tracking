@@ -1,21 +1,40 @@
-# detection/yolo.py
+"""YOLO-based human detection module for CCTV tracking system.
 
+This module provides a YOLODetector class that uses the YOLO (You Only Look Once)
+model from the ultralytics package to detect humans in video frames. It's optimized
+for person detection and supports both CPU and CUDA acceleration.
+
+Typical usage:
+    detector = YOLODetector(model_path='yolov8n.pt')
+    detections = detector.detect(frame)
+
+The detector returns bounding boxes in the format [x1, y1, x2, y2, confidence, class_id]
+where class_id 0 represents the 'person' class in the COCO dataset.
+
+Dependencies:
+    - numpy
+    - torch
+    - ultralytics
+"""
+
+import numpy as np
 import torch
 from ultralytics import YOLO
 
-import numpy as np
 
 class YOLODetector:
-    def __init__(self, model_path='yolov8n.pt'):
+    """YOLO-based human detection class."""
+
+    def __init__(self, model_path: str = "yolov8n.pt") -> None:
         """Initializes the YOLO detector.
 
         Args:
             model_path (str): Path to the YOLO model weights file (e.g., 'yolov8n.pt').
-                                Defaults to 'yolov8n.pt'. BoxMOT will download it if not found.
+            Defaults to 'yolov8n.pt'. BoxMOT will download it if not found.
         """
         print(f"Initializing YOLO model with weights: {model_path}")
         # Check for CUDA availability
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
         print(f"Using device: {self.device}")
 
         # Load the YOLO model using boxmot
@@ -27,48 +46,56 @@ class YOLODetector:
             print(f"Error loading YOLO model: {e}")
             raise
 
-    def detect(self, frame):
+    def detect(self, frame: np.ndarray) -> np.ndarray:
         """Detects objects (specifically humans) in a given frame.
 
         Args:
             frame (numpy.ndarray): The input video frame.
 
         Returns:
-            numpy.ndarray: Detections in the format [x1, y1, x2, y2, confidence, class_id].
-                           Returns an empty array if no humans are detected.
+            numpy.ndarray: Detections in the format
+            [x1, y1, x2, y2, confidence, class_id].
+            Returns an empty array if no humans are detected.
         """
+        detections: np.ndarray = self.model(frame)[0].boxes.data.cpu().numpy()
+        # bboxes: np.ndarray = detections[:, :4]
+        confidences: np.ndarray = detections[:, 4]
         # Perform inference
-        results = self.model.predict(frame, device=self.device, classes=[0], verbose=False) # class 0 is 'person' in COCO
+        results = self.model.predict(
+            frame, device=self.device, classes=[0], verbose=False
+        )  # class 0 is 'person' in COCO
 
         # Extract bounding boxes, confidences, and class IDs for detected persons
-        detections = []
         if results and results[0].boxes is not None:
-            boxes = results[0].boxes.xyxy.cpu().numpy()  # Bounding boxes (x1, y1, x2, y2)
+            boxes = (
+                results[0].boxes.xyxy.cpu().numpy()
+            )  # Bounding boxes (x1, y1, x2, y2)
             confidences = results[0].boxes.conf.cpu().numpy()  # Confidence scores
-            class_ids = results[0].boxes.cls.cpu().numpy()    # Class IDs
+            class_ids = results[0].boxes.cls.cpu().numpy()  # Class IDs
 
             # Combine into the desired format [x1, y1, x2, y2, confidence, class_id]
-            detections = np.hstack((boxes, confidences[:, np.newaxis], class_ids[:, np.newaxis]))
+            detections = np.hstack(
+                (boxes, confidences[:, np.newaxis], class_ids[:, np.newaxis])
+            )
 
         # Ensure detections is a numpy array even if empty
-        if not isinstance(detections, np.ndarray):
-            detections = np.empty((0, 6)) # Ensure shape (0, 6)
+        else:
+            detections = np.empty((0, 6))  # Ensure shape (0, 6)
 
-        return detections
+        return detections.astype(np.float32)
+
+    def __call__(self, frame: np.ndarray) -> np.ndarray:
+        """Calls the detect method to perform object detection on the frame."""
+        return self.detect(frame)
+
 
 # Example usage (optional, for testing)
-if __name__ == '__main__':
-    import cv2
-    import numpy as np
-
+if __name__ == "__main__":
     # Create a dummy black image
     dummy_frame = np.zeros((480, 640, 3), dtype=np.uint8)
 
-    try:
-        detector = YOLODetector()
-        print("Detector initialized.")
-        detections = detector.detect(dummy_frame)
-        print(f"Detected {len(detections)} objects in dummy frame:")
-        print(detections)
-    except Exception as e:
-        print(f"An error occurred during example usage: {e}")
+    detector = YOLODetector()
+    print("Detector initialized.")
+    detects = detector.detect(dummy_frame)
+    print(f"Detected {len(detects)} objects in dummy frame:")
+    print(detects)
