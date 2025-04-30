@@ -6,15 +6,19 @@ authors = [
     {name = "Dmitrii Tikhanovskii",email = "dimont200246@gmail.com"}
 ]
 readme = "README.md"
-requires-python = "^3.11"
+requires-python = ">=3.11,<3.12"
 dependencies = [
     "opencv-python",
     "numpy>=1.24.4",
     "boxmot",
-    "torch",
-    "torchvision",
+    "torch>=2.0.0,<3.0.0",
+    "torchvision>=0.15.0",
     "setuptools",
-    "ultralytics (>=8.3.119,<9.0.0)",
+    "ultralytics>=8.3.119,<9.0.0",
+    "streamlit==1.24.0",
+    "watchdog>=3.0.0",
+    "asyncio>=3.4.3",
+    "nest-asyncio>=1.5.8"
 ]
 
 
