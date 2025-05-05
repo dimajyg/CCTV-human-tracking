@@ -15,11 +15,11 @@ COPY pyproject.toml poetry.lock* ./
 # Install project dependencies
 # --no-root: Do not install the project itself, only dependencies
 # --no-dev: Do not install development dependencies
-RUN poetry config virtualenvs.create false && \
+RUN poetry config virtualenvs.create true && \
     poetry install --no-root --no-dev
 
 # Copy the rest of the application code
 COPY . .
 
 # Command to run the application
-CMD ["python", "main.py"]
+CMD ["poetry", "run", "python", "app.py"]
