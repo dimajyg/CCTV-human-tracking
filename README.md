@@ -170,7 +170,6 @@ cctv-human-tracking/
 - Docker (optional, for containerized deployment)
 
 ## Contributers
-- [Dimajy Ghosh](h
 - [Tikhanovskii Dmitrii](https://github.com/dimajyg) - Repository / Deployment / UI
 - [Stasilovich Rudolf](https://github.com/rudiandradi) - Dataset Research / Model Training
 
